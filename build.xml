@@ -1,47 +1,51 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns:ivy="antlib:org.apache.ivy.ant" name="solrmongoimporter" default="jar">
+<project name="SolrMongoImporter" default="jar" basedir=".">
 
-    <property file="build.properties"/>
+	<property file="build.properties"/>
 
-    <target name="clean">
-        <delete dir="build"/>
-    </target>
+	<property name="version" value="1.1.0"/>
+	
+	<property name="src" location="src"/>
+	<property name="build" location="build"/>
+	<property name="dist" location="dist"/>
 
-    <target name="init" depends="clean">
-        <mkdir dir="build"/>
-<!--        <ivy:retrieve /> -->
-    </target>
+	<target name="clean">
+		<delete dir="${build}"/>
+		<delete dir="${dist}"/>
+	</target>
 
-    <path id="build.classpath">
-        <fileset dir=".">
-            <include name="lib/*.jar"/>
-        </fileset>
-    </path>
+	<target name="init" depends="clean">
+		<mkdir dir="${build}"/>
+	</target>
 
-    <pathconvert property="mf.classpath" pathsep=" ">
-        <path refid="build.classpath"/>
-        <mapper>
-            <chainedmapper>
-                <flattenmapper/>
-                <globmapper from="*.jar" to="lib/*.jar"/>
-            </chainedmapper>
-        </mapper>
-    </pathconvert>
+	<path id="build.classpath">
+		<fileset dir=".">
+			<include name="lib/*.jar"/>
+		</fileset>
+	</path>
 
+	<pathconvert property="mf.classpath" pathsep=" ">
+		<path refid="build.classpath"/>
+		<mapper>
+			<chainedmapper>
+				<flattenmapper/>
+				<globmapper from="*.jar" to="lib/*.jar"/>
+			</chainedmapper>
+		</mapper>
+	</pathconvert>
 
-    <path id="jars">
-        <fileset dir="lib" includes="**/*.jar"/>
-    </path>
+	<path id="jars">
+		<fileset dir="lib" includes="**/*.jar"/>
+	</path>
 
-    <target name="compile" depends="init">
+	<target name="compile" depends="init">
+		<mkdir dir="${build}"/>
+		<javac includeantruntime="false" target="1.7" source="1.7"  bootclasspath="/usr/lib/jvm/java-7-oracle/jre/lib/rt.jar" srcdir="${src}" destdir="${build}" classpathref="jars" debug="on" />
+	</target>
 
-        <mkdir dir="build"/>
-        <javac srcdir="src" destdir="build" classpathref="jars" debug="on"/>
-    </target>
-
-
-    <target name="jar" depends="compile">
-        <jar basedir="build" destfile="dest/solr-mongo-importer.jar" />
-    </target>
+	<target name="jar" depends="compile">
+		<mkdir dir="${dist}"/>
+		<jar basedir="${build}" destfile="${dist}/solr-mongo-importer-${version}.jar" />
+	</target>
 
 </project>
