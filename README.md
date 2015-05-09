@@ -1,4 +1,4 @@
-# Solr Mongo Importer
+# Solr MongoDB Importer
 Welcome to the Solr MongoDB Importer project. This project provides MongoDB support for the Solr Data Import Handler.
 
 ## Features
