@@ -26,7 +26,7 @@ Welcome to the Solr Mongo Importer project. This project provides MongoDb suppor
 1. Firstly you will need a copy of the Solr Mongo Importer jar.
 
     Getting Solr Mongo Importer
-    1. [Download the JAR from github](https://github.com/phadadi/SolrMongoImporter/downloads)
+    1. [Download the JAR from github](https://github.com/phadadi/SolrMongoImporter/releases/download/v1.1.0/solr-mongo-importer-1.1.0.jar)
     2. Build your own using the ant build script you will need the JDK installed as well as Ant
 2. You will also need the [MongoDB Java driver 3.x JAR](http://mvnrepository.com/artifact/org.mongodb/mongo-java-driver)
 
