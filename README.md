@@ -1,33 +1,33 @@
 # Solr Mongo Importer
-Welcome to the Solr Mongo Importer project. This project provides MongoDb support for the Solr Data Import Handler.
+Welcome to the Solr MongoDB Importer project. This project provides MongoDB support for the Solr Data Import Handler.
 
 ## Features
-* Retrive data from a MongoDb collection
-* Authenticate using MongoDb authentication
+* Retrive data from a MongoDB collection
+* Authenticate using MongoDB authentication
 * Map Mongo fields to Solr fields (for accessing nested fields "." (dot) string eg.: *Params.Size*)
 * Date conversion of field value to required format
 
 ## Classes
 
-* MongoDataSource - Provides a MongoDb datasource
+* MongoDataSource - Provides a MongoDB datasource
     * database (**required**) - The name of the data base you want to connect to
     * host     (*optional* - default: localhost)
     * port     (*optional* - default: 27017)
     * username (*optional*)
     * password (*optional*)
-* MongoEntityProcessor - Use with the MongoDataSource to query a MongoDb collection
+* MongoEntityProcessor - Use with the MongoDataSource to query a MongoDB collection
     * collection (**required**)
     * query (**required**)
-* MongoMapperTransformer - Map MongoDb fields to your Solr schema
+* MongoMapperTransformer - Map MongoDB fields to your Solr schema
     * mongoField (**required**)
     * dateFormat (*optional*)
 
 ## Installation
-1. Firstly you will need a copy of the Solr Mongo Importer jar.
+1. Firstly you will need a copy of the Solr MongoDB Importer jar.
 
-    Getting Solr Mongo Importer
-    1. [Download the JAR from github](https://github.com/phadadi/SolrMongoImporter/releases/download/v1.1.0/solr-mongo-importer-1.1.0.jar)
-    2. Build your own using the ant build script you will need the JDK installed as well as Ant
+    Getting Solr MongoDB Importer
+    1. [Download the JAR from GitHub](https://github.com/phadadi/SolrMongoImporter/releases/download/v1.1.0/solr-mongo-importer-1.1.0.jar)
+    2. Build your own using the ant build script you will need the JDK installed as well as Ant with [Maven Ant Tasks](https://maven.apache.org/ant-tasks/)
 2. You will also need the [MongoDB Java driver 3.x JAR](http://mvnrepository.com/artifact/org.mongodb/mongo-java-driver)
 
 3. Place both of these jar's in your Solr libaries folder (I put mine in 'lib' folder with the other jar's)

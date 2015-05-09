@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project name="SolrMongoImporter" default="jar" basedir=".">
+<project xmlns:artifact="antlib:org.apache.maven.artifact.ant" name="SolrMongoImporter" default="jar" basedir=".">
 
 	<property file="build.properties"/>
 
@@ -8,7 +8,19 @@
 	<property name="src" location="src"/>
 	<property name="build" location="build"/>
 	<property name="dist" location="dist"/>
+	<property name="lib" location="lib"/>
 
+	<artifact:dependencies filesetId="dependency.fileset" useScope="runtime">
+		<dependency groupId="org.mongodb" artifactId="mongo-java-driver" version="3.0.1"/>
+		<dependency groupId="org.apache.solr" artifactId="solr-dataimporthandler" version="5.0.0"/>
+		<dependency groupId="org.slf4j" artifactId="slf4j-api" version="1.7.12"/>
+	</artifact:dependencies>
+	
+	<copy todir="${lib}">
+		<fileset refid="dependency.fileset"/>
+		<mapper type="flatten"/>
+	</copy>
+	
 	<target name="clean">
 		<delete dir="${build}"/>
 		<delete dir="${dist}"/>
