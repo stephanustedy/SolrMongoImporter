@@ -43,4 +43,9 @@ public class MongoMapperTransformer extends Transformer {
 	 */
 	public static final String MONGO_FIELD = "mongoField";
 
+	/**
+	 * Date format option
+	 * 
+	 */
+	public static final String DATE_FORMAT = "dateFormat";
 }

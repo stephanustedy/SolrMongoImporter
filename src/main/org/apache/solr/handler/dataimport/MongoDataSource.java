@@ -16,9 +16,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.text.*;
 
 import static org.apache.solr.handler.dataimport.DataImportHandlerException.SEVERE;
 import static org.apache.solr.handler.dataimport.DataImportHandlerException.wrapAndThrow;
+
+import static org.apache.solr.handler.dataimport.MongoMapperTransformer.DATE_FORMAT;
+import static org.apache.solr.handler.dataimport.MongoMapperTransformer.MONGO_FIELD;
 
 /**
  * Solr MongoDB data source
@@ -26,14 +30,15 @@ import static org.apache.solr.handler.dataimport.DataImportHandlerException.wrap
  */
 public class MongoDataSource extends DataSource<Iterator<Map<String, Object>>> {
 
-	private static final Logger LOG = LoggerFactory.getLogger(TemplateTransformer.class);
+	private static final Logger LOG = LoggerFactory.getLogger(DataSource.class);
 	
 	private MongoCollection mongoCollection;
 	private MongoDatabase mongoDb;
 	private MongoClient mongoClient;
-
 	private MongoCursor mongoCursor;
 
+	private Map<String, String> dateFields;
+	
 	/**
 	 * Initialize
 	 * 
@@ -42,11 +47,28 @@ public class MongoDataSource extends DataSource<Iterator<Map<String, Object>>> {
 	 */
 	@Override
 	public void init(Context context, Properties initProps) {
+		
 		String databaseName = initProps.getProperty(DATABASE);
 		String host = initProps.getProperty(HOST, "localhost");
 		String port = initProps.getProperty(PORT, "27017");
 		String username = initProps.getProperty(USERNAME);
 		String password = initProps.getProperty(PASSWORD);
+
+		/**
+		 * Collect date formatted fields
+		 * 
+		 */
+		this.dateFields = new HashMap<String, String>();
+		
+		for (Map<String, String> fields : context.getAllEntityFields()) {
+			String dateFormat = fields.get(DATE_FORMAT);
+			String mongoField = fields.get(MONGO_FIELD);
+			
+			if (dateFormat != null && mongoField != null) {
+				this.dateFields.put(mongoField, dateFormat);
+			}
+			
+		}
 
 		if (databaseName == null) {
 			throw new DataImportHandlerException(SEVERE, "Database must be supplied");
@@ -84,7 +106,7 @@ public class MongoDataSource extends DataSource<Iterator<Map<String, Object>>> {
 
 		mongoCursor = this.mongoCollection.find(queryObject).iterator();
 
-		ResultSetIterator resultSet = new ResultSetIterator(mongoCursor);
+		ResultSetIterator resultSet = new ResultSetIterator(mongoCursor, this.dateFields);
 		return resultSet.getIterator();
 	}
 
@@ -108,10 +130,13 @@ public class MongoDataSource extends DataSource<Iterator<Map<String, Object>>> {
 
 		MongoCursor mongoCursor;
 
+		Map<String, String> dateFields;
+		
 		Iterator<Map<String, Object>> resultSetIterator;
 
-		public ResultSetIterator(MongoCursor mongoCursor) {
+		public ResultSetIterator(MongoCursor mongoCursor, Map<String, String> dateFields) {
 			this.mongoCursor = mongoCursor;
+			this.dateFields = dateFields;
 
 			resultSetIterator = new Iterator<Map<String, Object>>() {
 				@Override
@@ -255,18 +280,38 @@ public class MongoDataSource extends DataSource<Iterator<Map<String, Object>>> {
 			final String[] fieldParts = fieldName.split("\\.");
 
 			int i = 1;
-			Object val = object.get(fieldParts[0]);
+			Object value = object.get(fieldParts[0]);
 
-			while (i < fieldParts.length && (val instanceof Document || val instanceof ArrayList)) {
-				if (val instanceof ArrayList) {
-					val = ((ArrayList) val).get(Integer.parseInt(fieldParts[i]));
+			while (i < fieldParts.length && (value instanceof Document || value instanceof ArrayList)) {
+				if (value instanceof ArrayList) {
+					value = ((ArrayList) value).get(Integer.parseInt(fieldParts[i]));
 				} else {
-					val = ((Document) val).get(fieldParts[i]);
+					value = ((Document) value).get(fieldParts[i]);
 				}
 				i++;
 			}
+			
+			/**
+			 * Convert date to format required by Solr
+			 * 
+			 */
+			if (!this.dateFields.isEmpty() && this.dateFields.containsKey(fieldName) && value instanceof String) {
+				try {
+					DateFormat dateFormat = new SimpleDateFormat(this.dateFields.get(fieldName));
+					
+					Date date = dateFormat.parse(value.toString());
+				
+					DateFormat solrDateFormat = new SimpleDateFormat(SOLR_DATE_FORMAT);
+					
+					value = solrDateFormat.format(date);
+				} catch (Exception e) {
+					LOG.warn("Date convertion error", e);
+					
+					value = null;
+				}
+			}
 
-			return val;
+			return value;
 		}
 		
 		/**
@@ -362,5 +407,11 @@ public class MongoDataSource extends DataSource<Iterator<Map<String, Object>>> {
 	 * 
 	 */
 	public static final String PASSWORD = "password";
-
+	
+	/**
+	 * Solr date format
+	 * 
+	 */
+	public static final String SOLR_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss'Z'";
+	
 }
