@@ -4,21 +4,25 @@ Welcome to the Solr MongoDB Importer project. This project provides MongoDB supp
 ## Features
 * Retrive data from a MongoDB collection
 * Authenticate using MongoDB authentication
-* Map Mongo fields to Solr fields (for accessing nested fields "." (dot) string eg.: *Params.Size*)
+* Map Mongo fields to Solr fields (for accessing nested fields use "." (dot) as path separator eg.: *Params.Size*)
 * Date conversion of field value to required format
 
 ## Classes
 
-* MongoDataSource - Provides a MongoDB datasource
+* **MongoDataSource** - Provides a MongoDB datasource
     * database (**required**) - The name of the data base you want to connect to
-    * host     (*optional* - default: localhost)
-    * port     (*optional* - default: 27017)
+    * host (*optional* - default: localhost)
+    * port (*optional* - default: 27017)
     * username (*optional*)
     * password (*optional*)
-* MongoEntityProcessor - Use with the MongoDataSource to query a MongoDB collection
+
+
+* **MongoEntityProcessor** - Use with the MongoDataSource to query a MongoDB collection
     * collection (**required**)
     * query (**required**)
-* MongoMapperTransformer - Map MongoDB fields to your Solr schema
+
+
+* **MongoMapperTransformer** - Map MongoDB fields to your Solr schema
     * mongoField (**required**)
     * dateFormat (*optional*)
 
@@ -27,10 +31,13 @@ Welcome to the Solr MongoDB Importer project. This project provides MongoDB supp
 
     Getting Solr MongoDB Importer
     1. [Download the JAR from GitHub](https://github.com/phadadi/SolrMongoImporter/releases/download/v1.1.0/solr-mongo-importer-1.1.0.jar)
-    2. Build your own using the ant build script you will need the JDK installed as well as Ant with [Maven Ant Tasks](https://maven.apache.org/ant-tasks/)
+    2. Build your own using the ant build script. You will need the JDK installed as well as Ant with [Maven Ant Tasks](https://maven.apache.org/ant-tasks/) for downloading dependencies.
+
+
 2. You will also need the [MongoDB Java driver 3.x JAR](http://mvnrepository.com/artifact/org.mongodb/mongo-java-driver)
 
 3. Place both of these jar's in your Solr libaries folder (I put mine in 'lib' folder with the other jar's)
+
 4. Add lib directives to your solrconfig.xml
 
 ```xml
