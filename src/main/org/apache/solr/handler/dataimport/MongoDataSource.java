@@ -16,13 +16,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
-import java.text.*;
 
 import static org.apache.solr.handler.dataimport.DataImportHandlerException.SEVERE;
 import static org.apache.solr.handler.dataimport.DataImportHandlerException.wrapAndThrow;
-
-import static org.apache.solr.handler.dataimport.MongoMapperTransformer.DATE_FORMAT;
-import static org.apache.solr.handler.dataimport.MongoMapperTransformer.MONGO_FIELD;
 
 /**
  * Solr MongoDB data source
@@ -36,8 +32,6 @@ public class MongoDataSource extends DataSource<Iterator<Map<String, Object>>> {
 	private MongoDatabase mongoDb;
 	private MongoClient mongoClient;
 	private MongoCursor mongoCursor;
-
-	private Map<String, String> dateFields;
 	
 	/**
 	 * Initialize
@@ -53,22 +47,6 @@ public class MongoDataSource extends DataSource<Iterator<Map<String, Object>>> {
 		String port = initProps.getProperty(PORT, "27017");
 		String username = initProps.getProperty(USERNAME);
 		String password = initProps.getProperty(PASSWORD);
-
-		/**
-		 * Collect date formatted fields
-		 * 
-		 */
-		this.dateFields = new HashMap<String, String>();
-		
-		for (Map<String, String> fields : context.getAllEntityFields()) {
-			String dateFormat = fields.get(DATE_FORMAT);
-			String mongoField = fields.get(MONGO_FIELD);
-			
-			if (dateFormat != null && mongoField != null) {
-				this.dateFields.put(mongoField, dateFormat);
-			}
-			
-		}
 
 		if (databaseName == null) {
 			throw new DataImportHandlerException(SEVERE, "Database must be supplied");
@@ -106,7 +84,7 @@ public class MongoDataSource extends DataSource<Iterator<Map<String, Object>>> {
 
 		mongoCursor = this.mongoCollection.find(queryObject).iterator();
 
-		ResultSetIterator resultSet = new ResultSetIterator(mongoCursor, this.dateFields);
+		ResultSetIterator resultSet = new ResultSetIterator(mongoCursor);
 		return resultSet.getIterator();
 	}
 
@@ -134,9 +112,8 @@ public class MongoDataSource extends DataSource<Iterator<Map<String, Object>>> {
 		
 		Iterator<Map<String, Object>> resultSetIterator;
 
-		public ResultSetIterator(MongoCursor mongoCursor, Map<String, String> dateFields) {
+		public ResultSetIterator(MongoCursor mongoCursor) {
 			this.mongoCursor = mongoCursor;
-			this.dateFields = dateFields;
 
 			resultSetIterator = new Iterator<Map<String, Object>>() {
 				@Override
@@ -211,7 +188,9 @@ public class MongoDataSource extends DataSource<Iterator<Map<String, Object>>> {
 			while (docKeysIterator.hasNext()) {
 				String docKey = docKeysIterator.next();
 				
-				if (doc.get(docKey) instanceof Document) {
+				Object docPart = doc.get(docKey);
+				
+				if (docPart instanceof Document) {
 					String parent;
 
 					if (parentKey == null) {
@@ -220,19 +199,18 @@ public class MongoDataSource extends DataSource<Iterator<Map<String, Object>>> {
 						parent = parentKey + "." + docKey;
 					}
 
-					Set<String> subKeys = getDocumentKeys((Document) doc.get(docKey), parent);
+					Set<String> subKeys = getDocumentKeys((Document) docPart, parent);
 
 					Iterator<String> subKeysIterator = subKeys.iterator();
 
 					while (subKeysIterator.hasNext()) {
 						keys.add(subKeysIterator.next());
 					}
-				} else if (doc.get(docKey) instanceof ArrayList) {
-					ArrayList<Object> list = (ArrayList) doc.get(docKey);
-
-					Iterator<Object> listIterator = list.iterator();
+				} else if (docPart instanceof ArrayList) {
+					Iterator<Object> listIterator = ((ArrayList) docPart).iterator();
 
 					Integer i = 0;
+					Boolean isScalarValuesOnly = true;
 
 					while (listIterator.hasNext()) {
 						String parent;
@@ -253,9 +231,21 @@ public class MongoDataSource extends DataSource<Iterator<Map<String, Object>>> {
 							while (subKeysIterator.hasNext()) {
 								keys.add(subKeysIterator.next());
 							}
+							
+							if (isScalarValuesOnly) {
+								isScalarValuesOnly = false;
+							}
 						}
 
 						i++;
+					}
+					
+					if (isScalarValuesOnly) {
+						if (parentKey != null) {
+							keys.add(parentKey + "." + docKey);
+						} else {
+							keys.add(docKey);
+						}
 					}
 				} else {
 					if (parentKey != null) {
@@ -291,26 +281,6 @@ public class MongoDataSource extends DataSource<Iterator<Map<String, Object>>> {
 				i++;
 			}
 			
-			/**
-			 * Convert date to format required by Solr
-			 * 
-			 */
-			if (!this.dateFields.isEmpty() && this.dateFields.containsKey(fieldName) && value instanceof String) {
-				try {
-					DateFormat dateFormat = new SimpleDateFormat(this.dateFields.get(fieldName));
-					
-					Date date = dateFormat.parse(value.toString());
-				
-					DateFormat solrDateFormat = new SimpleDateFormat(SOLR_DATE_FORMAT);
-					
-					value = solrDateFormat.format(date);
-				} catch (Exception e) {
-					LOG.warn("Date convertion error", e);
-					
-					value = null;
-				}
-			}
-
 			return value;
 		}
 		
@@ -407,11 +377,5 @@ public class MongoDataSource extends DataSource<Iterator<Map<String, Object>>> {
 	 * 
 	 */
 	public static final String PASSWORD = "password";
-	
-	/**
-	 * Solr date format
-	 * 
-	 */
-	public static final String SOLR_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss'Z'";
-	
+		
 }
