@@ -58,7 +58,8 @@ Here is a sample data-config.xml showing the use of all components
                  query="{'Active':1}"
                  collection="ProductData"
                  datasource="MongoSource"
-                 transformer="MongoMapperTransformer">
+                 transformer="MongoMapperTransformer"
+                 mapMongoFields="true">
              <field column="title" name="title" mongoField="Title"/>
              <field column="description" name="description" mongoField="LongDescription"/>
              <field column="brand" name="brand" mongoField="Brand"/>
