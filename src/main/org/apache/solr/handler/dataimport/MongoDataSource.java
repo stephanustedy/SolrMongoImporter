@@ -32,6 +32,7 @@ public class MongoDataSource extends DataSource<Iterator<Map<String, Object>>> {
 	private MongoDatabase mongoDb;
 	private MongoClient mongoClient;
 	private MongoCursor mongoCursor;
+	private String mapMongoFields;
 	
 	/**
 	 * Initialize
@@ -47,6 +48,17 @@ public class MongoDataSource extends DataSource<Iterator<Map<String, Object>>> {
 		String port = initProps.getProperty(PORT, "27017");
 		String username = initProps.getProperty(USERNAME);
 		String password = initProps.getProperty(PASSWORD);
+		mapMongoFields = initProps.getProperty(MAP_MONGO_FIELDS, "true");
+
+
+		List<ServerAddress> seeds = new ArrayList<ServerAddress>();
+		String[] hosts = host.split(",");
+		String[] ports = port.split(",");
+
+		for (int i = 0; i < hosts.length; i++) {
+			String seed_port = hosts.length == ports.length ? ports[i] : ports[0];
+			seeds.add(new ServerAddress(hosts[i],Integer.parseInt(seed_port)));
+		}
 
 		if (databaseName == null) {
 			throw new DataImportHandlerException(SEVERE, "Database must be supplied");
@@ -56,9 +68,9 @@ public class MongoDataSource extends DataSource<Iterator<Map<String, Object>>> {
 			if (username != null) {
 				MongoCredential credential = MongoCredential.createCredential(username, databaseName, password.toCharArray());
 
-				this.mongoClient = new MongoClient(new ServerAddress(host, Integer.parseInt(port)), Arrays.asList(credential));
+				this.mongoClient = new MongoClient(seeds, Arrays.asList(credential));
 			} else {
-				this.mongoClient = new MongoClient(new ServerAddress(host, Integer.parseInt(port)));
+				this.mongoClient = new MongoClient(seeds);
 			}
 
 			this.mongoClient.setReadPreference(ReadPreference.secondaryPreferred());
@@ -153,10 +165,15 @@ public class MongoDataSource extends DataSource<Iterator<Map<String, Object>>> {
 		 */
 		private Map<String, Object> getARow() {
 			Document document = (Document) getMongoCursor().next();
-
 			Map<String, Object> result = new HashMap<>();
 
-			Set<String> keys = getDocumentKeys(document, null);
+			Set<String> keys;
+
+			if(mapMongoFields == "true"){
+				keys = getDocumentKeys(document, null);
+			}else{
+				keys = document.keySet();
+			}
 
 			Iterator<String> keysIterator = keys.iterator();
 
@@ -165,10 +182,27 @@ public class MongoDataSource extends DataSource<Iterator<Map<String, Object>>> {
 
 				Object innerObject = getDocumentFieldValue(document, key);
 
+				innerObject = serializeObject(innerObject);
+
 				result.put(key, innerObject);
 			}
 
 			return result;
+		}
+
+		private Object serializeObject(Object object){
+			Object response;
+			if(object instanceof ArrayList){
+				response = new ArrayList();
+				for (int i = 0; i < ((ArrayList) object).size(); i++) {
+					((ArrayList)response).add(serializeObject(((ArrayList) object).get(i)));
+				}
+			}else if(object instanceof Document){
+				response = JSON.parse(((Document) object).toJson());
+			}else{
+				response = object;
+			}
+			return response;
 		}
 
 		/**
@@ -377,5 +411,11 @@ public class MongoDataSource extends DataSource<Iterator<Map<String, Object>>> {
 	 * 
 	 */
 	public static final String PASSWORD = "password";
+
+	/**
+	 * Map Mongo Fields option
+	 *
+	 */
+	public static final String MAP_MONGO_FIELDS = "mapMongoFields";
 		
 }

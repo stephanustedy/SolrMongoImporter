@@ -4,17 +4,18 @@ Welcome to the Solr MongoDB Importer project. This project provides MongoDB supp
 ## Features
 * Retrive data from a MongoDB collection
 * Authenticate using MongoDB authentication
-* Map Mongo fields to Solr fields (for accessing nested fields use "." (dot) as path separator eg.: *Params.Size*)
+* Map Mongo fields to Solr fields wit mapMongoFields option (for accessing nested fields use "." (dot) as path separator eg.: *Params.Size*)
 * Date conversion of field value to required format
 
 ## Classes
 
 * **MongoDataSource** - Provides a MongoDB datasource
     * database (**required**) - The name of the data base you want to connect to
-    * host (*optional* - default: localhost)
-    * port (*optional* - default: 27017)
+    * host (*optional* - default: localhost) - for replica set add comma separated values
+    * port (*optional* - default: 27017) - for different ports in replica set add comma separated values
     * username (*optional*)
     * password (*optional*)
+    * mapMongoFields (*optional* - default: true)
 
 
 * **MongoEntityProcessor** - Use with the MongoDataSource to query a MongoDB collection
