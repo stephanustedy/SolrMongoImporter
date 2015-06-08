@@ -11,7 +11,6 @@ import com.mongodb.client.MongoDatabase;
 import com.mongodb.util.JSON;
 
 import org.bson.Document;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -91,9 +90,10 @@ public class MongoDataSource extends DataSource<Iterator<Map<String, Object>>> {
 	 */
 	@Override
 	public Iterator<Map<String, Object>> getData(String query) {
-
 		BasicDBObject queryObject = (BasicDBObject) JSON.parse(query);
-
+		LOG.warn("YAHOO");
+		LOG.warn(query);
+		LOG.warn(queryObject.toString());
 		mongoCursor = this.mongoCollection.find(queryObject).iterator();
 
 		ResultSetIterator resultSet = new ResultSetIterator(mongoCursor);
@@ -165,7 +165,7 @@ public class MongoDataSource extends DataSource<Iterator<Map<String, Object>>> {
 		 */
 		private Map<String, Object> getARow() {
 			Document document = (Document) getMongoCursor().next();
-			Map<String, Object> result = new HashMap<>();
+			Map<String, Object> result = new HashMap<String, Object>();
 
 			Set<String> keys;
 
@@ -213,7 +213,7 @@ public class MongoDataSource extends DataSource<Iterator<Map<String, Object>>> {
 		 * @return 
 		 */
 		private Set<String> getDocumentKeys(Document doc, String parentKey) {
-			Set<String> keys = new HashSet<>();
+			Set<String> keys = new HashSet<String>();
 
 			Set<String> docKeys = doc.keySet();
 
