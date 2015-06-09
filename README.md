@@ -28,16 +28,14 @@ Welcome to the Solr MongoDB Importer project. This project provides MongoDB supp
     * dateFormat (*optional*)
 
 ## Installation
-1. Firstly you will need a copy of the Solr MongoDB Importer jar.
+1. Build your own Jar using Maven pom.xml
 
-    Getting Solr MongoDB Importer
-    1. [Download the JAR from GitHub](https://github.com/jsalcedo09/SolrMongoImporter/releases/download/v1.1.2/solr-mongo-importer-1.1.2.jar)
-    2. Build your own using the ant build script. You will need the JDK installed as well as Ant with [Maven Ant Tasks](https://maven.apache.org/ant-tasks/) for downloading dependencies.
+2. You will also need the below libs:
 
+    1. [MongoDB Java driver 3.x JAR](http://mvnrepository.com/artifact/org.mongodb/mongo-java-driver)
+    2. Dataimporthandler : http://mvnrepository.com/artifact/org.apache.solr/solr-dataimporthandler
 
-2. You will also need the [MongoDB Java driver 3.x JAR](http://mvnrepository.com/artifact/org.mongodb/mongo-java-driver)
-
-3. Place both of these jar's in your Solr libaries folder (I put mine in 'lib' folder with the other jar's)
+3. Place both of these jar's in your Solr core/collection's lib folder
 
 4. Add lib directives to your solrconfig.xml
 
@@ -46,23 +44,41 @@ Welcome to the Solr MongoDB Importer project. This project provides MongoDB supp
 <lib dir="./lib/" regex="mongo-java-driver.*\.jar"/>
 ```
 
-5. Add the below fields config in schema.xml
-```
+5. Add the below fields config in schema.xml inside <fields></fields> tag
+
+```xml
 <field name="name" type="string" indexed="true" stored="true"/>
 <field name="size" type="int" indexed="true" stored="true"/>
 <field name="created" type="date" indexed="true" stored="true"/>
 ```
 
+6. Declare data-config file in solrconfig.xml by adding below code inside <config> </config> tag
+
+```xml
+<requestHandler name="/dataimport" class="org.apache.solr.handler.dataimport.DataImportHandler">
+<lst name="defaults">
+<str name="config">data-config.xml</str>
+</lst>
+</requestHandler>
+```
+
 7. Add the below documents in mongo collection
+
 ```
 use test;
 db.products.update({"name":"Prod1"},{$set: { "attrib":{"size":1}, "deleted":"false"}, $currentDate: {lastmodified: true, created: true}}, {upsert: true, multi:true});
 db.products.update({"name":"Prod2"},{$set: { "attrib":{"size":2}, "deleted":"false"}, $currentDate: {lastmodified: true, created: true}}, {upsert: true, multi:true});
+```
 
+8. Add the below documents in mongo collection ONLY to test delete functionality
+
+```
+use test;
 db.products.update({"name":"Prod1"},{$set: {"deleted":"true"}, $currentDate: {lastmodified: true}}, {upsert: true, multi:true});
 ```
 
-##Usage
+9. Create a data-config.xml file in the path collection1\conf\ (which by default holds solrconfig.xml and schema.xml)
+
 Here is a sample data-config.xml showing the use of all components
 ```xml
 <?xml version="1.0" encoding="UTF-8" ?>
@@ -88,4 +104,15 @@ Here is a sample data-config.xml showing the use of all components
     </entity>
   </document>
 </dataConfig>
+```
+
+##Usage
+To run full-import ( Deletes all data in index and does a Fresh full import)
+```
+http://localhost:8983/solr/collection1/dataimport?command=full-import&clean=true&indent=true&wt=json
+```
+
+To run delta import( Imports only the modified data(based on the query) and deletes the data(based on $deleteDocById & $skipDoc in data-config.xml) )
+```
+http://localhost:8983/solr/collection1/dataimport?command=full-import&clean=false&indent=true&wt=json
 ```
