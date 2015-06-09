@@ -30,21 +30,19 @@ Welcome to the Solr MongoDB Importer project. This project provides MongoDB supp
 ## Installation
 1. Build your own Jar using Maven pom.xml
 
-2. You will also need the below libs:
+2. You will also need the below libs placed inside Solr core/collection1/lib folder:
 
     1. [MongoDB Java driver 3.x JAR](http://mvnrepository.com/artifact/org.mongodb/mongo-java-driver)
     2. Dataimporthandler : http://mvnrepository.com/artifact/org.apache.solr/solr-dataimporthandler
 
-3. Place both of these jar's in your Solr core/collection's lib folder
-
-4. Add lib directives to your solrconfig.xml
+3. Add lib directives to your solrconfig.xml
 
     ```xml
     <lib dir="./lib/" regex="solr-mongo-importer.*\.jar"/>
     <lib dir="./lib/" regex="mongo-java-driver.*\.jar"/>
     ```
 
-5. Add the below fields config in schema.xml inside <fields></fields> tag
+4. Add the below fields config in schema.xml inside <fields></fields> tag
 
     ```xml
     <field name="name" type="string" indexed="true" stored="true"/>
@@ -52,7 +50,7 @@ Welcome to the Solr MongoDB Importer project. This project provides MongoDB supp
     <field name="created" type="date" indexed="true" stored="true"/>
     ```
 
-6. Declare data-config file in solrconfig.xml by adding below code inside <config> </config> tag
+5. Declare data-config file in solrconfig.xml by adding below code inside <config> </config> tag
 
     ```xml
     <requestHandler name="/dataimport" class="org.apache.solr.handler.dataimport.DataImportHandler">
@@ -62,7 +60,7 @@ Welcome to the Solr MongoDB Importer project. This project provides MongoDB supp
     </requestHandler>
     ```
 
-7. Add the below documents in mongo collection
+6. Add the below documents in mongo collection
 
     ```
     use test;
@@ -70,14 +68,14 @@ Welcome to the Solr MongoDB Importer project. This project provides MongoDB supp
     db.products.update({"name":"Prod2"},{$set: { "attrib":{"size":2}, "deleted":"false"}, $currentDate: {lastmodified: true, created: true}}, {upsert: true, multi:true});
     ```
 
-8. Add the below documents in mongo collection ONLY to test delete functionality
+7. Add the below documents in mongo collection ONLY to test delete functionality
 
     ```
     use test;
     db.products.update({"name":"Prod1"},{$set: {"deleted":"true"}, $currentDate: {lastmodified: true}}, {upsert: true, multi:true});
     ```
 
-9. Create a data-config.xml file in the path collection1\conf\ (which by default holds solrconfig.xml and schema.xml)
+8. Create a data-config.xml file in the path collection1\conf\ (which by default holds solrconfig.xml and schema.xml)
 
     Here is a sample data-config.xml showing the use of all components
     ```xml
