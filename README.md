@@ -46,26 +46,46 @@ Welcome to the Solr MongoDB Importer project. This project provides MongoDB supp
 <lib dir="./lib/" regex="mongo-java-driver.*\.jar"/>
 ```
 
+5. Add the below fields config in schema.xml
+```
+<field name="name" type="string" indexed="true" stored="true"/>
+<field name="size" type="int" indexed="true" stored="true"/>
+<field name="created" type="date" indexed="true" stored="true"/>
+```
+
+7. Add the below documents in mongo collection
+```
+use test;
+db.products.update({"name":"Prod1"},{$set: { "attrib":{"size":1}, "deleted":"false"}, $currentDate: {lastmodified: true, created: true}}, {upsert: true, multi:true});
+db.products.update({"name":"Prod2"},{$set: { "attrib":{"size":2}, "deleted":"false"}, $currentDate: {lastmodified: true, created: true}}, {upsert: true, multi:true});
+
+db.products.update({"name":"Prod1"},{$set: {"deleted":"true"}, $currentDate: {lastmodified: true}}, {upsert: true, multi:true});
+```
+
 ##Usage
 Here is a sample data-config.xml showing the use of all components
 ```xml
 <?xml version="1.0" encoding="UTF-8" ?>
 <dataConfig>
-     <dataSource name="MongoSource" type="MongoDataSource" database="Inventory"/>
-     <document name="Products">
-         <entity name="Product"
-                 processor="MongoEntityProcessor"
-                 query="{'Active':1}"
-                 collection="ProductData"
-                 datasource="MongoSource"
-                 transformer="MongoMapperTransformer"
-                 mapMongoFields="true">
-             <field column="title" name="title" mongoField="Title"/>
-             <field column="description" name="description" mongoField="LongDescription"/>
-             <field column="brand" name="brand" mongoField="Brand"/>
-             <field column="size" name="size" mongoField="Params.Size"/>
-             <field column="created" name="created" mongoField="Created" dateFormat="yyyy-MM-dd HH:mm:ss"/>
-         </entity>
-     </document>
- </dataConfig>
+  <dataSource name="MongoSource" type="MongoDataSource" database="test"/>
+  <document name="products">
+    <entity name="product"
+           processor="MongoEntityProcessor"
+           query='{$where: "${dataimporter.request.clean} != false || this.lastmodified > ISODate(\"${dataimporter.last_index_time}\")"}'
+           collection="products"
+           datasource="MongoSource"
+           transformer="MongoMapperTransformer"
+           mapMongoFields="true">
+       <!--  If mongoField name and the field declared in schema.xml are same than no need to declare below.
+           If not same than you have to refer the mongoField to field in schema.xml
+          ( Ex: mongoField="EmpNumber" to name="EmployeeNumber"). -->
+      <field column="_id" name="id"/>
+      <field column="name" name="name" mongoField="name"/>
+      <field column="size" name="size" mongoField="attrib.size"/>
+      <field column="created" name="created" mongoField="created" dateFormat="yyyy-MM-dd HH:mm:ss"/>
+      <field column="$skipDoc" mongoField="deleted"/>
+      <field column="$deleteDocById" mongoField="_id"/>
+    </entity>
+  </document>
+</dataConfig>
 ```
