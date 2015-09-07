@@ -73,8 +73,8 @@ public class MongoDataSource extends DataSource<Iterator<Map<String, Object>>> {
 			}
 
 			this.mongoClient.setReadPreference(ReadPreference.secondaryPreferred());
-
 			this.mongoDb = this.mongoClient.getDatabase(databaseName);
+                        this.mongoDb = this.mongoDb.withReadPreference(ReadPreference.secondaryPreferred());
 		} catch (RuntimeException e) {
 			throw e;
 		} catch (Exception e) {
